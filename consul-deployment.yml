@@ -1,48 +1,49 @@
----
 apiVersion: apps/v1beta1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: consul
 spec:
   replicas: 3
+  serviceName: consul
   template:
     metadata:
       labels:
         app: consul
     spec:
+      terminationGracePeriodSeconds: 10
+      securityContext:
+        fsGroup: 1000
       containers:
       - name: consul
         image: consul:latest
+        env:
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
         args: 
-        - agent 
+        - agent
+        - -advertise=$(POD_IP)
+        - -bind=0.0.0.0
+        - -bootstrap-expect=3
+        - -client=0.0.0.0
+        - -domain=cluster.local
         - -server
-        - -bootstrap-expect
-        - "3"
-        - -client
-        - 0.0.0.0
-...
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: consul
-spec:
-  selector:
-    app: consul
-  ports:
-  - name: http
-    port: 8500
-  - name: dns
-    port: 8600
-...
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: consul-cluster
-spec:
-  selector:
-    app: consul
-  ports:
-  - name: lan
-    port: 8301
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - consul
+              - leave
+        volumeMounts:
+        - name: consul-data
+          mountPath: /consul/data
+  volumeClaimTemplates:
+  - metadata:
+      name: consul-data
+    spec:
+      accessModes: 
+      - ReadWriteOnce
+      resources:
+        requests: 
+          storage: 1Gi
