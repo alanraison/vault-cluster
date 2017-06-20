@@ -1,0 +1,11 @@
+version: '3'
+services:
+  consul-server:
+    image: consul:latest
+    command:
+    - consul
+    - agent
+    - -data-dir=/consul/data
+    - -server
+    - -bootstrap-expect=1
+    - -disable-host-node-id

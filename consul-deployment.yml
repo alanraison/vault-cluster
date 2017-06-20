@@ -31,7 +31,9 @@ spec:
         - -bind=0.0.0.0
         - -bootstrap-expect=3
         - -client=0.0.0.0
+        - -disable-host-node-id
         - -domain=cluster.local
+        - -raft-protocol=3
         - -server
         lifecycle:
           postStart:
@@ -45,14 +47,15 @@ spec:
                   consul-1.consul.$(NAMESPACE).svc.cluster.local \
                   consul-2.consul.$(NAMESPACE).svc.cluster.local \
                   || true
-          preStop:
-            exec:
-              command:
-              - consul
-              - leave
         volumeMounts:
         - name: consul-data
           mountPath: /consul/data
+        - name: consul-config
+          mountPath: /consul/config
+      volumes:
+      - name: consul-config
+        configMap: 
+          name: consul-config
   volumeClaimTemplates:
   - metadata:
       name: consul-data
