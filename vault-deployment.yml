@@ -42,6 +42,14 @@ spec:
             - IPC_LOCK
         args:
         - server
+        readinessProbe:
+          httpGet:
+            path: /v1/sys/seal-status
+            port: 8200
+          periodSeconds: 10
+          timeoutSeconds: 60
+          successThreshold: 1
+          failureThreshold: 3
         volumeMounts:
         - name: vault-config
           mountPath: /vault/config
